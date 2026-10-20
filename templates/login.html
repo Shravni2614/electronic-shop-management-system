@@ -1,0 +1,46 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Login | Electronic Shop</title>
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <header>
+        <h1>Electronic Shop Management System</h1>
+        <p>Sign in to manage your shop</p>
+    </header>
+
+    <main>
+        <section class="panel" style="max-width: 420px; margin: 50px auto;">
+            <h2>Staff Login</h2>
+
+            {% with messages = get_flashed_messages() %}
+                {% for message in messages %}
+                    <div class="flash">{{ message }}</div>
+                {% endfor %}
+            {% endwith %}
+
+            <form method="post" action="{{ url_for('login') }}">
+                <input type="hidden" name="csrf_token"
+                       value="{{ csrf_token() }}">
+
+                <label for="username">Username</label>
+                <input id="username" name="username"
+                       type="text" autocomplete="username"
+                       required autofocus>
+
+                <label for="password">Password</label>
+                <input id="password" name="password"
+                       type="password" autocomplete="current-password"
+                       required>
+
+                <button type="submit">Sign In</button>
+            </form>
+        </section>
+    </main>
+</body>
+</html>

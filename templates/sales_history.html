@@ -1,0 +1,112 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sales History - Electronic Shop</title>
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <header>
+        <h1>Electronic Shop Management System</h1>
+        <p>Sales History</p>
+    </header>
+
+    <main class="container">
+        <section class="panel">
+            <h2>Filter Sales</h2>
+
+            <form method="GET" action="{{ url_for('sales_history') }}">
+                <div class="form-group">
+                    <label for="start_date">Start Date</label>
+                    <input type="date" id="start_date" name="start_date"
+                           value="{{ start_date }}">
+                </div>
+
+                <div class="form-group">
+                    <label for="end_date">End Date</label>
+                    <input type="date" id="end_date" name="end_date"
+                           value="{{ end_date }}">
+                </div>
+
+                <div class="form-group">
+                    <label for="status">Sale Status</label>
+                    <select id="status" name="status">
+                        <option value="All"
+                            {% if selected_status == 'All' %}selected{% endif %}>
+                            All Statuses
+                        </option>
+                        <option value="Completed"
+                            {% if selected_status == 'Completed' %}selected{% endif %}>
+                            Completed
+                        </option>
+                        <option value="Pending"
+                            {% if selected_status == 'Pending' %}selected{% endif %}>
+                            Pending
+                        </option>
+                        <option value="Cancelled"
+                            {% if selected_status == 'Cancelled' %}selected{% endif %}>
+                            Cancelled
+                        </option>
+                    </select>
+                </div>
+
+                <button type="submit">Apply Filters</button>
+                <a href="{{ url_for('sales_history') }}">Reset Filters</a>
+            </form>
+        </section>
+
+        <section class="panel">
+            <h2>Sales Records</h2>
+            <p>Total records displayed: <strong>{{ sales|length }}</strong></p>
+
+            {% if sales %}
+            <div class="scroll">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Sale ID</th>
+                            <th>Date</th>
+                            <th>Customer</th>
+                            <th>Product</th>
+                            <th>Quantity</th>
+                            <th>Discount (%)</th>
+                            <th>Total (₹)</th>
+                            <th>Payment</th>
+                            <th>Status</th>
+                            <th>Receipt</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for sale in sales %}
+                        <tr>
+                            <td>{{ sale.sale_id }}</td>
+                            <td>{{ sale.sale_date }}</td>
+                            <td>{{ sale.customer }}</td>
+                            <td>{{ sale.product_name }}</td>
+                            <td>{{ sale.quantity }}</td>
+                            <td>{{ sale.discount_pct }}</td>
+                            <td>{{ "%.2f"|format(sale.total_amount) }}</td>
+                            <td>{{ sale.payment_mode }}</td>
+                            <td>{{ sale.status }}</td>
+                            <td>
+                                <a href="{{ url_for('sale_receipt',
+                                    sale_id=sale.sale_id) }}"
+                                   target="_blank">View Receipt</a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+                <p>No sales records found for the selected filters.</p>
+            {% endif %}
+        </section>
+
+        <p><a href="{{ url_for('index') }}">Back to Dashboard</a></p>
+    </main>
+</body>
+</html>

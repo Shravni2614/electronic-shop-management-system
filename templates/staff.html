@@ -1,0 +1,119 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Staff Management | Electronic Shop</title>
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <header>
+        <h1>Staff Management</h1>
+        <p>Manage your electronic shop staff accounts.</p>
+        <p>
+            Signed in as <strong>{{ session.get('full_name') }}</strong>
+            (Owner)
+        </p>
+        <a href="{{ url_for('index') }}">Back to Dashboard</a>
+        |
+        <form method="post" action="{{ url_for('logout') }}"
+              style="display: inline;">
+            <input type="hidden" name="csrf_token"
+                   value="{{ csrf_token() }}">
+            <button type="submit">Logout</button>
+        </form>
+    </header>
+
+    <main>
+        {% with messages = get_flashed_messages() %}
+            {% for message in messages %}
+                <p class="flash">{{ message }}</p>
+            {% endfor %}
+        {% endwith %}
+
+        <section class="panel">
+            <h2>Add Staff Account</h2>
+
+            <form method="post" action="{{ url_for('add_staff') }}">
+                <input type="hidden" name="csrf_token"
+                       value="{{ csrf_token() }}">
+
+                <input type="text" name="username"
+                       placeholder="Username" maxlength="50" required>
+
+                <input type="text" name="full_name"
+                       placeholder="Full name" maxlength="100" required>
+
+                <select name="role" required>
+                    <option value="cashier" selected>Cashier</option>
+                    <option value="owner">Owner</option>
+                </select>
+
+                <input type="password" name="password"
+                       placeholder="Password (minimum 8 characters)"
+                       minlength="8" required>
+
+                <button type="submit">Create Account</button>
+            </form>
+        </section>
+
+        <section class="panel">
+            <h2>Staff Accounts</h2>
+
+            {% if staff %}
+                <div class="scroll">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Username</th>
+                                <th>Full Name</th>
+                                <th>Role</th>
+                                <th>Status</th>
+                                <th>Created</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for person in staff %}
+                                <tr>
+                                    <td>{{ person.id }}</td>
+                                    <td>{{ person.username }}</td>
+                                    <td>{{ person.full_name }}</td>
+                                    <td>{{ person.role|title }}</td>
+                                    <td>
+                                        {{ 'Active' if person.is_active
+                                           else 'Inactive' }}
+                                    </td>
+                                    <td>{{ person.created_at }}</td>
+                                    <td>
+                                        {% if person.id != session.get('user_id') %}
+                                            <form method="post"
+                                                  action="{{ url_for('toggle_staff', staff_id=person.id) }}">
+                                                <input type="hidden"
+                                                       name="csrf_token"
+                                                       value="{{ csrf_token() }}">
+
+                                                <button type="submit">
+                                                    {{ 'Deactivate' if person.is_active
+                                                       else 'Activate' }}
+                                                </button>
+                                            </form>
+                                        {% else %}
+                                            Current account
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <p>No staff accounts found.</p>
+            {% endif %}
+        </section>
+    </main>
+</body>
+</html>

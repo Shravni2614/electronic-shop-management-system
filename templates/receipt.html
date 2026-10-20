@@ -1,0 +1,200 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Receipt #{{ receipt.sale_id }}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+
+    <style>
+        .receipt {
+            max-width: 850px;
+            margin: 30px auto;
+            padding: 30px;
+            background: white;
+            color: #222;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+        }
+
+        .receipt-header {
+            text-align: center;
+            border-bottom: 2px solid #333;
+            padding-bottom: 15px;
+            margin-bottom: 20px;
+        }
+
+        .receipt-details {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 25px;
+        }
+
+        .receipt table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            border: 1px solid #ddd;
+        }
+
+        .receipt th,
+        .receipt td {
+            border: 1px solid #ddd;
+            padding: 10px;
+            text-align: left;
+        }
+
+        .receipt .total {
+            text-align: right;
+            font-size: 20px;
+            font-weight: bold;
+            margin-top: 20px;
+        }
+
+        .receipt-footer {
+            text-align: center;
+            margin-top: 30px;
+            border-top: 1px dashed #aaa;
+            padding-top: 15px;
+        }
+
+        .receipt-actions {
+            text-align: center;
+            margin: 20px auto;
+        }
+
+        @media print {
+            header,
+            .receipt-actions {
+                display: none !important;
+            }
+
+            body {
+                background: white !important;
+                color: black !important;
+            }
+
+            main {
+                margin: 0 !important;
+                padding: 0 !important;
+            }
+
+            .receipt {
+                max-width: none;
+                margin: 0;
+                padding: 10px;
+                border: none;
+                box-shadow: none;
+            }
+        }
+
+        @media (max-width: 600px) {
+            .receipt {
+                margin: 10px;
+                padding: 12px;
+                overflow-x: auto;
+            }
+
+            .receipt-details {
+                grid-template-columns: 1fr;
+            }
+
+            .receipt table {
+                font-size: 12px;
+            }
+
+            .receipt th,
+            .receipt td {
+                padding: 6px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>Electronic Shop Management System</h1>
+    <p>Customer Receipt</p>
+</header>
+
+<main>
+    <div class="receipt">
+        <div class="receipt-header">
+            <h2>Electronic Shop</h2>
+            <p>Sales Receipt</p>
+            <h3>Receipt No. #{{ receipt.sale_id }}</h3>
+        </div>
+
+        <div class="receipt-details">
+            <div>
+                <strong>Customer:</strong>
+                {{ receipt.customer_name }}
+            </div>
+
+            <div>
+                <strong>Date:</strong>
+                {{ receipt.sale_date }}
+            </div>
+
+            <div>
+                <strong>Payment Mode:</strong>
+                {{ receipt.payment_mode }}
+            </div>
+
+            <div>
+                <strong>Status:</strong>
+                {{ receipt.status }}
+            </div>
+        </div>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Product</th>
+                    <th>Brand</th>
+                    <th>Unit Price</th>
+                    <th>Quantity</th>
+                    <th>Discount</th>
+                    <th>Amount</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in items %}
+                <tr>
+                    <td>{{ item.product_name }}</td>
+                    <td>{{ item.brand }}</td>
+                    <td>
+                        Rs. {{ '{:,.2f}'.format(item.unit_price|float) }}
+                    </td>
+                    <td>{{ item.quantity }}</td>
+                    <td>{{ '{:g}'.format(item.discount_pct|float) }}%</td>
+                    <td>
+                        Rs. {{ '{:,.2f}'.format(item.line_total|float) }}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <p class="total">
+            Total: Rs. {{ '{:,.2f}'.format(receipt.total_amount|float) }}
+        </p>
+
+        <div class="receipt-footer">
+            <p>Thank you for shopping with us!</p>
+            <p>Please keep this receipt for your records.</p>
+        </div>
+    </div>
+
+    <div class="receipt-actions">
+        <button type="button" onclick="window.print()">
+            Print / Save as PDF
+        </button>
+        <a href="{{ url_for('index') }}">Back to Dashboard</a>
+    </div>
+</main>
+
+</body>
+</html>

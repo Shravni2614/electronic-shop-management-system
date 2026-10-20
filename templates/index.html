@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Electronic Shop Management System</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}"></head>
+<body>
+
+<header>
+    <h1>Electronic Shop Management System</h1>
+    <p>Inventory, customers and sales management</p>
+    <p>
+        Signed in as: <strong>{{ session.get('full_name') }}</strong>
+        ({{ session.get('role') }})
+    </p>
+    <form method="post" action="{{ url_for('logout') }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button type="submit">Logout</button>
+    </form>
+</header>
+
+<main>
+{% with msgs = get_flashed_messages() %}{% for m in msgs %}<div class="flash">{{ m }}</div>{% endfor %}{% endwith %}
+
+<section class="dashboard">
+    
+<div class="card">
+    <h3>Products</h3>
+    <h2>{{ total_products }}</h2>
+</div>
+
+<div class="card">
+    <h3>Customers</h3>
+    <h2>{{ total_customers }}</h2>
+</div>
+
+{% if is_owner %}
+    <div class="card">
+        <h3>Revenue (Completed)</h3>
+        <h2>Rs. {{ '{:,.0f}'.format(revenue) }}</h2>
+    </div>
+
+    <div class="card">
+        <h3>Pending Sales</h3>
+        <h2>{{ pending }}</h2>
+    </div>
+    {% endif %}
+
+
+<!-- Low Stock Alert -->
+{% set low_stock_products = products | selectattr('stock_quantity', 'le', low_stock_threshold) | list %}
+
+{% if low_stock_products %}
+<div class="card low-stock-card">
+    <h3>⚠️ Low Stock Alert</h3>
+    <p>
+        {{ low_stock_products | length }} product(s) need restocking.
+        These products have {{ low_stock_threshold }} or fewer units remaining:
+    </p>
+
+    <ul>
+        {% for product in low_stock_products %}
+        <li>
+            <strong>{{ product.product_name }}</strong>
+            — {{ product.stock_quantity }} units remaining
+        </li>
+        {% endfor %}
+    </ul>
+</div>
+{% endif %}
+
+
+</section>
+
+<section class="panel"><h2>Search Products</h2>
+ <form method="get" action="/"><input name="q" value="{{ search }}" placeholder="Product, brand or category"><button>Search</button></form>
+ <div class="scroll"><table><tr><th>ID</th><th>Product</th><th>Brand</th><th>Category</th><th>Price (Rs.)</th><th>Stock</th></tr>
+ {% for p in products %}<tr><td>{{ p.product_id }}</td><td>{{ p.product_name }}</td><td>{{ p.brand }}</td><td>{{ p.category_name }}</td><td>{{ p.unit_price }}</td><td class="{{ 'low' if p.stock_quantity < 10 }}">{{ p.stock_quantity }}</td></tr>{% endfor %}</table></div></section>
+
+<section class="panel">
+    <h2>Create Invoice</h2>
+
+    <form method="post" action="/sales/add" id="sale-form">
+        <input type="hidden" name="csrf_token"
+               value="{{ csrf_token() }}">
+
+        <label for="customer_id">Customer</label>
+        <select name="customer_id" id="customer_id" required>
+            {% for c in customers %}
+            <option value="{{ c.customer_id }}">
+                {{ c.full_name }}
+            </option>
+            {% endfor %}
+        </select>
+
+        <h3>Invoice Items</h3>
+
+        <div id="sale-items">
+            <div class="sale-item">
+                <select name="product_id[]" required>
+                    <option value="">Select Product</option>
+                    {% for p in products %}
+                    <option value="{{ p.product_id }}"
+                            data-price="{{ p.unit_price }}"
+                            data-stock="{{ p.stock_quantity }}">
+                        {{ p.product_name }} — Rs. {{ p.unit_price }}
+                        (Stock: {{ p.stock_quantity }})
+                    </option>
+                    {% endfor %}
+                </select>
+
+                <input name="quantity[]" type="number"
+                       min="1" value="1" required
+                       placeholder="Quantity">
+
+                <input name="discount_pct[]" type="number"
+                       min="0" max="100" step="0.5"
+                       value="0" required
+                       placeholder="Discount %">
+
+                <button type="button" class="remove-item"
+                        onclick="removeSaleItem(this)">
+                    Remove
+                </button>
+            </div>
+        </div>
+
+        <button type="button" id="add-item-button"
+                onclick="addSaleItem()">
+            + Add Another Product
+        </button>
+
+        <label for="payment_mode">Payment Mode</label>
+        <select name="payment_mode" id="payment_mode" required>
+            <option value="Cash">Cash</option>
+            <option value="UPI">UPI</option>
+            <option value="Card">Card</option>
+            <option value="EMI">EMI</option>
+        </select>
+
+        <button type="submit">Save Invoice</button>
+    </form>
+</section>
+
+<script>
+    function addSaleItem() {
+        const container = document.getElementById("sale-items");
+        const firstItem = container.querySelector(".sale-item");
+        const newItem = firstItem.cloneNode(true);
+
+        newItem.querySelector("select").selectedIndex = 0;
+        newItem.querySelector('input[name="quantity[]"]').value = 1;
+        newItem.querySelector('input[name="discount_pct[]"]').value = 0;
+
+        container.appendChild(newItem);
+    }
+
+    function removeSaleItem(button) {
+        const container = document.getElementById("sale-items");
+        const items = container.querySelectorAll(".sale-item");
+
+        if (items.length === 1) {
+            alert("An invoice must contain at least one product.");
+            return;
+        }
+
+        button.closest(".sale-item").remove();
+    }
+</script>
+</escape>
+
+<section class="panel"><h2>Register Customer</h2>
+ <form method="post" action="/customers/add">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+ <input name="full_name" placeholder="Full name" required><input name="email" type="email" placeholder="Email" required>
+ <input name="phone" placeholder="Phone"><input name="address" placeholder="Address" required>
+ <select name="customer_type"><option>Regular</option><option>Premium</option><option>Corporate</option></select>
+ <button>Save Customer</button></form></section>
+{% if is_owner %}
+
+<section class="panel">
+    <h2>Recent Sales</h2>
+    <div class="scroll">
+        <table>
+            <tr>
+                <th>ID</th>
+                <th>Customer</th>
+                <th>Product</th>
+                <th>Qty</th>
+                <th>Total (Rs.)</th>
+                <th>Payment</th>
+                <th>Status</th>
+                <th>Receipt</th>
+            </tr>
+
+            {% for s in sales %}
+            <tr>
+                <td>{{ s.sale_id }}</td>
+                <td>{{ s.customer }}</td>
+                <td>{{ s.product_name }}</td>
+                <td>{{ s.quantity }}</td>
+                <td>{{ s.total_amount }}</td>
+                <td>{{ s.payment_mode }}</td>
+                <td>{{ s.status }}</td>
+                <td>
+                    <a href="{{ url_for('sale_receipt', sale_id=s.sale_id) }}"
+                       target="_blank">
+                        View Receipt
+                    </a>
+                </td>
+            </tr>
+            {% endfor %}
+        </table>
+    </div>
+</section>
+{% endif %}
+</main>
+</body>
+</html>

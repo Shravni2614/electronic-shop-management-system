@@ -1,0 +1,148 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Sales & Inventory Reports</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+<header>
+    <h1>Electronic Shop Management System</h1>
+    <p>Sales & Inventory Reports</p>
+    <p>
+        Signed in as: <strong>{{ session.get('full_name') }}</strong>
+        ({{ session.get('role') }})
+    </p>
+    <form method="post" action="{{ url_for('logout') }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button type="submit">Logout</button>
+    </form>
+</header>
+
+<main>
+    {% with msgs = get_flashed_messages() %}
+        {% for m in msgs %}
+            <div class="flash">{{ m }}</div>
+        {% endfor %}
+    {% endwith %}
+
+    
+<h2>Filter Sales by Date</h2>
+
+<form method="get" action="{{ url_for('reports') }}">
+    <div class="form-group">
+        <label for="start_date">Start Date</label>
+        <input
+            type="date"
+            id="start_date"
+            name="start_date"
+            value="{{ start_date }}"
+        >
+    </div>
+
+    <div class="form-group">
+        <label for="end_date">End Date</label>
+        <input
+            type="date"
+            id="end_date"
+            name="end_date"
+            value="{{ end_date }}"
+        >
+    </div>
+
+    <button type="submit">Apply Filter</button>
+    <a href="{{ url_for('reports') }}">Reset Filter</a>
+</form>
+
+<hr>
+
+    <h2>Sales Summary</h2>
+    <section class="dashboard">
+        <div class="card">
+            <h3>Total Sales</h3>
+            <h2>{{ sales_summary.total_sales or 0 }}</h2>
+        </div>
+
+        <div class="card">
+            <h3>Completed Sales</h3>
+            <h2>{{ sales_summary.completed_sales or 0 }}</h2>
+        </div>
+
+        <div class="card">
+            <h3>Completed Revenue</h3>
+            <h2>Rs. {{ '{:,.2f}'.format(sales_summary.completed_revenue or 0) }}</h2>
+        </div>
+
+        <div class="card">
+            <h3>Pending Sales</h3>
+            <h2>{{ sales_summary.pending_sales or 0 }}</h2>
+        </div>
+
+        <div class="card">
+            <h3>Pending Amount</h3>
+            <h2>Rs. {{ '{:,.2f}'.format(sales_summary.pending_amount or 0) }}</h2>
+        </div>
+    </section>
+
+    <h2>Inventory Summary</h2>
+    <section class="dashboard">
+        <div class="card">
+            <h3>Total Products</h3>
+            <h2>{{ inventory_summary.total_products or 0 }}</h2>
+        </div>
+
+        <div class="card">
+            <h3>Total Units in Stock</h3>
+            <h2>{{ inventory_summary.total_units or 0 }}</h2>
+        </div>
+
+        <div class="card">
+            <h3>Estimated Inventory Value</h3>
+            <h2>Rs. {{ '{:,.2f}'.format(inventory_summary.inventory_value or 0) }}</h2>
+        </div>
+
+        <div class="card">
+            <h3>Low-Stock Products</h3>
+            <h2>{{ inventory_summary.low_stock_count or 0 }}</h2>
+        </div>
+    </section>
+
+    <h2>Products Requiring Restocking</h2>
+
+    {% if low_stock_products %}
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th>Product</th>
+                    <th>Brand</th>
+                    <th>Stock Remaining</th>
+                    <th>Unit Price</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for product in low_stock_products %}
+                <tr>
+                    <td>{{ product.product_name }}</td>
+                    <td>{{ product.brand }}</td>
+                    <td>{{ product.stock_quantity }}</td>
+                    <td>Rs. {{ '{:,.2f}'.format(product.unit_price) }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+        <p>All products have sufficient stock.</p>
+    {% endif %}
+
+    <p>
+        <a href="{{ url_for('index') }}">Back to Dashboard</a>
+    </p>
+</main>
+
+</body>
+</html>
